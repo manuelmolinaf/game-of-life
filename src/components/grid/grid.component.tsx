@@ -1,20 +1,15 @@
 import Cell from '../cell/cell.component';
-import {useState, useEffect, Fragment} from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { Button } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 
 const Grid = () => {
-
-  const [height, setHeight] = useState(70);
-  const [width, setWidth] = useState(150);
-  const[cells, setCells] = useState<boolean[][]>([]);
-  const [isUpdating, setIsUpdating] = useState(false);
-
-
-  useEffect(()=>{
-
-    const arr: any[][] = [];
+  const [height, setHeight] = useState(50);
+  const [width, setWidth] = useState(50);
+  const [cells, setCells] = useState<boolean[][]>(() => {
+    // Initialize the state with the correct number of rows and columns
+    const arr: boolean[][] = [];
 
     for (let i = 0; i < height; i++) {
       arr[i] = [];
@@ -22,16 +17,13 @@ const Grid = () => {
       for (let j = 0; j < width; j++) {
         arr[i][j] = false;
       }
-
     }
 
-    setCells(arr);
+    return arr;
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  },[height, width]);
-
-
-  const getAliveNeighboursCount = (x:number, y:number):number =>{
-
+  const getAliveNeighboursCount = (x: number, y: number): number => {
     let aliveNeighbours = 0;
 
     const numRows = cells.length;
@@ -46,57 +38,57 @@ const Grid = () => {
       for (let j = startY; j <= endY; j++) {
         // Skip the current cell
         if (i === x && j === y) continue;
-  
-        if(cells[i][j]) aliveNeighbours = aliveNeighbours+1;
+
+        if (cells[i][j]) aliveNeighbours = aliveNeighbours + 1;
       }
     }
 
     return aliveNeighbours;
-  }
+  };
 
+  const updateCellValue = (newValue: boolean, y: number, x: number) => {
+    setCells((prevCells) => {
+      const newCells = [...prevCells];
+      newCells[y][x] = newValue;
+      return newCells;
+    });
+  };
 
-  const updateCellValue = (newValue:boolean, y:number, x:number) =>{
-
-    const newCells = [...cells];
-    newCells[y][x] = newValue;
-    setCells(newCells);
-
-  }
-
-  const updateCell = ( oldCells:boolean[][], y:number, x:number) =>{
-    if(isUpdating){
-      if(oldCells[y][x] && getAliveNeighboursCount(y,x) < 2) updateCellValue(false,y,x);
-      else if(oldCells[y][x] && getAliveNeighboursCount(y,x) >3) updateCellValue(false,y,x);
-      else if(!oldCells[y][x] && getAliveNeighboursCount(y,x) === 3) updateCellValue(true,y,x);
+  const updateCell = (oldCells: boolean[][], y: number, x: number) => {
+    if (isUpdating) {
+      if (oldCells[y][x] && getAliveNeighboursCount(y, x) < 2)
+        updateCellValue(false, y, x);
+      else if (oldCells[y][x] && getAliveNeighboursCount(y, x) > 3)
+        updateCellValue(false, y, x);
+      else if (!oldCells[y][x] && getAliveNeighboursCount(y, x) === 3)
+        updateCellValue(true, y, x);
     }
-    
-  }
+  };
 
-
-  useEffect(()=>{
-
+  useEffect(() => {
     const interval = setInterval(() => {
-
-      const oldCells = cells.slice().map(row => [...row]);;
-
-      for (let i = 0; i < height; i++) {
-
-        for (let j = 0; j < width; j++) {
-          updateCell(oldCells, i,j);  
-        } 
-      }      
-      }, 100);
+      setCells((prevCells) => {
+        const newCells = prevCells.slice().map((row) => [...row]);
+        for (let i = 0; i < height; i++) {
+          for (let j = 0; j < width; j++) {
+            updateCell(prevCells, i, j);
+          }
+        }
+        return newCells;
+      });
+    }, 250);
 
     return () => clearInterval(interval); // Clean up the interval
-  })
- 
-  const handlePlay = ()=>{
-    setIsUpdating(true);
-  }
+  });
 
-  const handlePause = ()=>{
+  const handlePlay = () => {
+    setIsUpdating(true);
+  };
+
+  const handlePause = () => {
     setIsUpdating(false);
-  }
+  };
+
 
   return (
 
